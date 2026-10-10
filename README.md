@@ -1,60 +1,53 @@
-# EarthfireAI Knowledge Base
+# EarthfireAI Toolbox
 
-可独立运行的本地文档导入、分块、SQLite FTS5 索引、检索和来源定位组件。默认不调用云端服务，不包含私人知识库，也不要求安装完整 EarthfireAI。
+一组面向学习与基础工程校核的确定性工具。当前公开候选版本包含单位换算、量纲检查、静液柱压差、静态压力梯度和两列 CSV 直线拟合。数值由程序计算，不由语言模型猜测。
 
 ## 已实现
 
-- TXT、Markdown 直接导入。
-- PDF、DOCX 通过可选依赖导入文字层。
-- SHA-256 去重、可配置分块和重叠长度。
-- SQLite FTS5 全文检索。
-- 返回文件名、来源路径、分块序号和片段。
-- 命令行创建、导入、列出和检索。
-
-## 未实现或未承诺
-
-- 扫描 PDF 自动 OCR、图片和复杂图表理解。
-- 向量检索、重排序、自动网页爬取和生成式问答。
-- WeKnora 本身及其数据库。EarthfireAI 整合版继续使用 WeKnora；本项目提供的是独立、轻量的公开组件。
+- Pint 单位换算和量纲一致性检查。
+- 恒密度假设下 `ΔP = ρgh`。
+- 静态压力梯度 `dP/dz = ρg`。
+- 两列 CSV 的带截距普通最小二乘直线拟合，输出斜率、截距、R² 与 RMSE。
+- 命令行 JSON 输出，便于其他 AI 或程序调用。
 
 ## 安装
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python -m pip install -e .
-# 需要 PDF / DOCX 时：
-.venv\Scripts\python -m pip install -e ".[documents]"
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
-## 使用
+本版本要求 Python 3.12 或更高版本。以上命令会把依赖安装到项目自己的虚拟环境中。
+
+## 示例
 
 ```powershell
-earthfire-knowledge init --db .\data\knowledge.sqlite3
-earthfire-knowledge import .\examples\public_sample.txt --db .\data\knowledge.sqlite3
-earthfire-knowledge search "达西定律" --db .\data\knowledge.sqlite3
-earthfire-knowledge list --db .\data\knowledge.sqlite3
+.\.venv\Scripts\earthfire-toolbox.exe convert 10 bar MPa
+.\.venv\Scripts\earthfire-toolbox.exe dimensions "kg/m^3*m/s^2*m" Pa
+.\.venv\Scripts\earthfire-toolbox.exe hydrostatic 1.10 "g/cm^3" 3000 m
+.\.venv\Scripts\earthfire-toolbox.exe gradient 1.10 "g/cm^3"
+.\.venv\Scripts\earthfire-toolbox.exe fit-csv .\examples\linear_sample.csv
 ```
-
-检索结果会显示 `[文档标题 / chunk N]`，便于回到原文核对。默认数据库位于当前目录 `data/knowledge.sqlite3`，已被 `.gitignore` 排除。
 
 ## 测试
 
 ```powershell
-python -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-测试使用公开的虚构 TXT 样本，不读取个人资料。
+## 适用边界
 
-## 与 EarthfireAI 整合版的关系
+- 静液柱计算假设密度恒定，深度必须是真垂深。
+- 不自动推断表压/绝压、深度基准、温度或多相流影响。
+- 直线拟合不自动删除异常点，也不证明模型适用于实际实验。
+- 两列 CSV 的 X 值必须至少包含两个不同数值；全部相同时斜率无法唯一确定，程序会明确报错。
+- JSON 输出只包含有限数值，不输出非标准的 `NaN` 或无穷值。
+- 结果用于学习和复核；工程决策应核对标准、方法范围、输入单位和原始数据。
 
-整合版的正式知识库仍是 WeKnora，本仓库不复制真实数据，也不替代现有数据库。未来可以通过适配器把相同的导入、检索接口接入整合版。
+## 未包含
 
-## 安全与限制
-
-- 导入的文档只是数据，不能成为系统命令。
-- 本项目不判断资料版权；使用者必须只导入有权处理的资料。
-- FTS5 是关键词检索，不能等同于语义向量检索。
-- PDF 只读取已有文字层；扫描件需要外部 OCR。
+OCR、下载器、复杂网页读取、商业软件、ANSYS、专业模拟器和未通过验证的候选工具均未打包。
 
 ## 许可证
 
